@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onResult(boolean allGranted, List<String> grantedList, List<String> deniedList) {
                         if (allGranted) {
-                            logDumper = LogX.init(MainActivity.this).tags("hf").setLogFilePath(null).startDumper();
+                            logDumper = LogX.init(MainActivity.this).tags("hf","test").setLogFilePath(null).startDumper();
                             String logFilePath = logDumper.getLogFilePath();
                             Toast.makeText(MainActivity.this, "本地日志存储在此路径:" + logFilePath, Toast.LENGTH_SHORT).show();
                         } else {

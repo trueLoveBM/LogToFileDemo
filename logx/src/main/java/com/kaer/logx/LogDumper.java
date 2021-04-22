@@ -1,12 +1,16 @@
 package com.kaer.logx;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+
+import com.kaer.logx.bean.LogBean;
 import com.kaer.logx.utils.MyDate;
-import com.kaer.logx.utils.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 日志转储器
@@ -95,9 +101,18 @@ public class LogDumper extends Thread {
         mklogFilePath();
 
         try {
-            out = new FileOutputStream(new File(logFilePath, "GPS-"
-                    + MyDate.getFileName() + ".log"));
+
+            File file = new File(logFilePath, "GPS-"
+                    + MyDate.getFileName() + ".log");
+            //若存在日志文件则追加
+            boolean isAppend = file.exists();
+            out = new FileOutputStream(file, isAppend);
+            if (isAppend) {
+                out.write("**********************************日志追加分割线******************************************\n".getBytes());
+            }
         } catch (FileNotFoundException ex) {
+            throw new RuntimeException(ex);
+        } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -130,7 +145,7 @@ public class LogDumper extends Thread {
      * @return
      */
     public LogDumper tags(String... tags) {
-        if (tags.length >0) {
+        if (tags.length > 0) {
             filterTags = new ArrayList<>();
             for (String tag : tags) {
                 filterTags.add(tag);
@@ -138,6 +153,7 @@ public class LogDumper extends Thread {
         }
         return this;
     }
+
 
     @Override
     public void run() {
@@ -155,9 +171,16 @@ public class LogDumper extends Thread {
                     continue;
                 }
                 if (out != null && line.contains(mPId)) {
-                    LogBean logBean = new LogBean(line);
 
-                    if (canLogOutPut(logBean)) {
+                    LogBean logBean = LogBean.Parse(line);
+
+                    //解析失败的日志直接保存
+                    if (!logBean.isParseSuccess()) {
+                        out.write((line + "(解析失败输出)\n")
+                                .getBytes());
+                    }
+                    //解析成功的日志，判断是否可以需要保存，需要则进行保存
+                    else if (canLogOutPut(logBean)) {
                         out.write((line + "\n")
                                 .getBytes());
                     }
