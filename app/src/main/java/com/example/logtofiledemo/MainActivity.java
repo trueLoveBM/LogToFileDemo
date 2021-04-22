@@ -52,16 +52,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //动态申请权限，需要的权限有读写外部存储权限
         PermissionX.init(this)
                 .permissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .request(new RequestCallback() {
-                    @Override
-                    public void onResult(boolean allGranted, List<String> grantedList, List<String> deniedList) {
-                        if (allGranted) {
-                            logDumper = LogX.init(MainActivity.this).tags("hf","test").setLogFilePath(null).startDumper();
-                            String logFilePath = logDumper.getLogFilePath();
-                            Toast.makeText(MainActivity.this, "本地日志存储在此路径:" + logFilePath, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "没有相关权限，无法存储本地日志", Toast.LENGTH_SHORT).show();
-                        }
+                .request((allGranted, grantedList, deniedList) -> {
+                    if (allGranted) {
+                        logDumper = LogX.init(MainActivity.this).tags("hf","test").setLogFilePath(null).startDumper();
+                        String logFilePath = logDumper.getLogFilePath();
+                        Toast.makeText(MainActivity.this, "本地日志存储在此路径:" + logFilePath, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "没有相关权限，无法存储本地日志", Toast.LENGTH_SHORT).show();
                     }
                 });
 

@@ -4,6 +4,7 @@ import android.content.Context;
 
 /**
  * LogX:用于帮助捕获Logcat日志，并保存到Android客户端下
+ * @author huangfan
  */
 public class LogX {
 

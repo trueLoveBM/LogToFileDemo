@@ -1,5 +1,9 @@
 package com.kaer.logx.utils;
 
+/**
+ * 字符串扩展方法
+ * @author huangfan
+ */
 public class StringUtils {
 
     /**

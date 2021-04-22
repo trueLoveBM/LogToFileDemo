@@ -1,16 +1,12 @@
 package com.kaer.logx;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
-
 import com.kaer.logx.bean.LogBean;
-import com.kaer.logx.utils.MyDate;
+import com.kaer.logx.utils.DateUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,8 +16,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 日志转储器
@@ -43,7 +37,7 @@ public class LogDumper extends Thread {
     /**
      * 当前应用的进程
      */
-    private String mPId;
+    private String pid;
 
     /**
      * logCat进程
@@ -81,7 +75,7 @@ public class LogDumper extends Thread {
     public LogDumper(Context context) {
         mWeakContext = new WeakReference<>(context);
         packageName = context.getPackageName();
-        mPId = String.valueOf(android.os.Process.myPid());
+        pid = String.valueOf(android.os.Process.myPid());
     }
 
 
@@ -98,12 +92,12 @@ public class LogDumper extends Thread {
             }
         }
 
-        mklogFilePath();
+        mkLogFilePath();
 
         try {
 
             File file = new File(logFilePath, "GPS-"
-                    + MyDate.getFileName() + ".log");
+                    + DateUtils.getDateStr() + ".log");
             //若存在日志文件则追加
             boolean isAppend = file.exists();
             out = new FileOutputStream(file, isAppend);
@@ -126,13 +120,12 @@ public class LogDumper extends Thread {
          * */
 
         // cmds = "logcat *:e *:w | grep \"(" + mPID + ")\"";
-        cmds = "logcat | grep \"(" + mPId + ")\""; //打印所有日誌信息
         // cmds = "logcat -s way"; //打印標籤過濾信息
-//            cmds = "logcat *:e *:i | grep \"(" + mPID + ")\"";
+        // cmds = "logcat *:e *:i | grep \"(" + mPID + ")\""
 
+        //打印所有日誌信息
+        cmds = "logcat | grep \"(" + pid + ")\"";
         //启动抓取线程
-
-
         start();
 
         return this;
@@ -170,9 +163,9 @@ public class LogDumper extends Thread {
                 if (line.length() == 0) {
                     continue;
                 }
-                if (out != null && line.contains(mPId)) {
+                if (out != null && line.contains(pid)) {
 
-                    LogBean logBean = LogBean.Parse(line);
+                    LogBean logBean = LogBean.parse(line);
 
                     //解析失败的日志直接保存
                     if (!logBean.isParseSuccess()) {
@@ -243,7 +236,7 @@ public class LogDumper extends Thread {
     /**
      * 若日志存储路径尚未初始化，则初始化其路径
      */
-    private void mklogFilePath() {
+    private void mkLogFilePath() {
         File file = new File(logFilePath);
         if (!file.exists()) {
             file.mkdirs();
@@ -269,8 +262,7 @@ public class LogDumper extends Thread {
         //優先保存到SD卡中
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED)) {
-            logFilePath = Environment.getExternalStorageDirectory()
-                    .getAbsolutePath() + File.separator + "miniGPS";
+            logFilePath = mWeakContext.get().getExternalFilesDir(null).getAbsolutePath()+ File.separator + "miniGPS";
             initOk = true;
         } else { //如果SD卡不存在，就保存到本應用的目錄下
             if (mWeakContext.get() != null) {

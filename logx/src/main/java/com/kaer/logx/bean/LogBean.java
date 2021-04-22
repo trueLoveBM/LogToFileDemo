@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 /**
  * log日志信息实体对象
+ * @author huangfan
  */
 public class LogBean {
     /**
@@ -23,6 +24,16 @@ public class LogBean {
      * 用于解析Log字符的正则
      */
     private static final Pattern LOG_PATTERN = Pattern.compile(LOG_PATTERN_STR);
+
+    /**
+     * 除去打印内容外，其余内容按照空格进行split的分组数，应该是六组，分别为
+     * time:打印时间 第0组+第1组
+     * pid:进程号   第2组
+     * tid:线程号   第3组
+     * tag:打印tag  第4组
+     * text:日志内容  第5组
+     */
+    private static final int LOG_INFO_LENGTH = 6;
 
     private String level;
     private String time;
@@ -45,7 +56,7 @@ public class LogBean {
     }
 
 
-    public static LogBean Parse(String log) {
+    public static LogBean parse(String log) {
         LogBean bean = new LogBean(log);
         return bean;
     }
@@ -57,11 +68,6 @@ public class LogBean {
      * @param log 要解析的日志
      */
     private void parseLogByPattern(String log) {
-//        log = "04-22 11:50:57.922  2174  2332 I ActivityManager: Start proc 13828:com.example.logtofiledemo/u0a41 for activity com.example.logtofiledemo/.MainActivity";
-//        String LOG_PATTERN_STR = "(?<time>\\d{2}[-]\\d{2}[\\s]\\d{2}[\\:]\\d{2}[\\:]\\d{2}[\\.]\\d{3})[\\s]+(?<pid>\\d+)";
-//        Pattern LOG_PATTERN = Pattern.compile(LOG_PATTERN_STR);
-
-        //04-22 09:54:41.961  5816  5816 D hf      : 测试
         Matcher m = LOG_PATTERN.matcher(log);
         if (m.find()) {
             parseSuccess = true;
@@ -104,6 +110,7 @@ public class LogBean {
             String loginfo = log.substring(0, in);
             String[] loginfoArray = loginfo.split(" ");
             //去掉分割后的数组中的空字符串
+            //空字符串是由于可能两组信息之间的空格不止一个，可能存在多个
             List<String> strlist = new ArrayList<>();
             for (String info : loginfoArray) {
                 if (!TextUtils.isEmpty(info)) {
@@ -114,7 +121,7 @@ public class LogBean {
             loginfoArray = new String[strlist.size()];
             strlist.toArray(loginfoArray);
 
-            if (loginfoArray.length == 6) {
+            if (loginfoArray.length == LOG_INFO_LENGTH) {
                 parseSuccess = true;
                 //时间
                 this.time = loginfoArray[0] + loginfoArray[1];
