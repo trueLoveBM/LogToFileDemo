@@ -1,20 +1,19 @@
 package com.example.logtofiledemo;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.kaer.logx.LogDumper;
 import com.kaer.logx.LogX;
+import com.kaer.logx.LogXConfig;
 import com.permissionx.guolindev.PermissionX;
-import com.permissionx.guolindev.callback.RequestCallback;
-
-import java.util.List;
 
 /**
  * 主窗体Activity
@@ -33,6 +32,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     Button btnTest2;
 
+
+    /**
+     * 存储路径
+     */
+    TextView tvPath;
+
     /**
      * 日志抓取对象
      */
@@ -45,18 +50,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnTest = findViewById(R.id.btnTest);
         btnTest2 = findViewById(R.id.btnTest2);
+        tvPath= findViewById(R.id.tv_path);
         btnTest.setOnClickListener(this);
         btnTest2.setOnClickListener(this);
-
 
         //动态申请权限，需要的权限有读写外部存储权限
         PermissionX.init(this)
                 .permissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .request((allGranted, grantedList, deniedList) -> {
                     if (allGranted) {
-                        logDumper = LogX.init(MainActivity.this).tags("hf","test").setLogFilePath(null).startDumper();
+                        LogXConfig config=new LogXConfig.Builder(this).FromConfig("Logx.properties").build();
+                        //使用默认配置
+                        logDumper = LogX.init(MainActivity.this).setConfig(config).startDumper();
                         String logFilePath = logDumper.getLogFilePath();
-                        Toast.makeText(MainActivity.this, "本地日志存储在此路径:" + logFilePath, Toast.LENGTH_SHORT).show();
+                        tvPath.setText(logFilePath);
                     } else {
                         Toast.makeText(MainActivity.this, "没有相关权限，无法存储本地日志", Toast.LENGTH_SHORT).show();
                     }
